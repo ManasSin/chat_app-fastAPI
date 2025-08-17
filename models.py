@@ -5,25 +5,6 @@ from sqlalchemy import create_engine, Column, Integer, String, Text, DateTime, B
 from sqlalchemy.ext.declarative import declarative_base
 from sqlalchemy.orm import sessionmaker
 
-# class Message(BaseModel):
-#     id: int
-#     session_id: str
-#     content: str
-#     word_count: int
-#     char_count: int
-#     sentence_count: int
-#     is_question: bool
-#     sentiment: str
-#     timestamp: datetime
-
-# class Session(BaseModel):
-#     id: str
-#     created_at: datetime
-#     total_messages: int
-#     total_words: int
-#     questions_count: int
-#     last_updated: datetime
-
 Base = declarative_base()
 
 class Message(Base):
@@ -40,12 +21,15 @@ class Message(Base):
     timestamp = Column(DateTime, default=datetime.now(timezone.utc))
 
 class Session(Base):
-    __tablename__ = "session"
+    __tablename__ = "sessions"
 
     id = Column(String, primary_key=True, index=True)
     total_messages = Column(Integer, default=0)
     total_words = Column(Integer, default=0)
     questions_asked = Column(Integer, default=0)
+    total_positive_messages = Column(Integer, default=0)
+    total_negative_messages = Column(Integer, default=0)
+    total_neutral_messages = Column(Integer, default=0)
     created_at = Column(DateTime, default=datetime.now(timezone.utc))
     last_updated = Column(DateTime, default=datetime.now(timezone.utc))
 

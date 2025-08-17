@@ -71,7 +71,7 @@ def process_message(content: str):
     return {
         "word_count": word_count,
         "char_count": char_count,
-        "session_count": sentence_count,
+        "sentence_count": sentence_count,
         "is_question": is_question,
         "sentiment": sentiment,
         "timestamp": datetime.now().isoformat()
@@ -92,6 +92,12 @@ def update_session_stats(db: Session, session_id: str, analytics: dict):
     session.total_words += analytics["word_count"]
     if analytics["is_question"]:
         session.questions_asked += 1
+    if analytics["sentiment"] == "positive":
+        session.total_positive_messages += 1
+    elif analytics["sentiment"] == "negative":
+        session.total_negative_messages += 1
+    else:
+        session.total_neutral_messages += 1
     session.last_updated = datetime.now(timezone.utc)
     db.commit()
     return session
@@ -104,6 +110,9 @@ def get_session_stats(db: Session, session_id: str):
         "total_messages": session.total_messages,
         "total_words": session.total_words,
         "questions_asked": session.questions_asked,
+        "total_positive_messages": session.total_positive_messages,
+        "total_negative_messages": session.total_negative_messages,
+        "total_neutral_messages": session.total_neutral_messages,
         "avg_message_length": round(avg_message_length, 1)
     }
 
@@ -115,7 +124,7 @@ async def websocket_endpoint(websocket: WebSocket, session_id: str):
         while True:
             data = await websocket.receive_text()
             message_data = json.loads(data)
-            content = message_data.get("content", "")
+            content = message_data.get("message", "")
  
             analytics = process_message(content)
 
@@ -126,13 +135,15 @@ async def websocket_endpoint(websocket: WebSocket, session_id: str):
                     content=content,
                     word_count=analytics["word_count"],
                     char_count=analytics["char_count"],
-                    sentence_count=analytics["session_count"],
+                    sentence_count=analytics["sentence_count"],
                     is_question=analytics["is_question"],
                     sentiment=analytics["sentiment"]
                 )
                 db.add(message)
  
-                session_stats = update_session_stats(db, session_id, analytics)
+                update_session_stats(db, session_id, analytics)
+                
+                session_stats = get_session_stats(db, session_id)
  
                 db.commit()
 
@@ -150,7 +161,7 @@ async def websocket_endpoint(websocket: WebSocket, session_id: str):
                 "analytics": {
                     "word_count": analytics["word_count"],
                     "char_count": analytics["char_count"],
-                    "sentence_count": analytics["session_count"],
+                    "sentence_count": analytics["sentence_count"],
                     "is_question": analytics["is_question"],
                     "sentiment": analytics["sentiment"]
                 },

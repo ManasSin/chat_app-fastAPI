@@ -19,15 +19,16 @@ async def test_websocket():
         for message in test_messages:
             print(f"\nSending: {message}")
 
-            await websocket.send(json.dumps({"content": message}))
+            await websocket.send(json.dumps({"message": message}))
 
             response = await websocket.recv()
             response_data = json.loads(response)
  
-            print("Response received:")
-            print(f"  Echo: {response_data['echo']}")
-            print(f"  Analytics: {json.dumps(response_data['analytics'], indent=2)}")
-            print(f"  Session Stats: {json.dumps(response_data['session_stats'], indent=2)}")
+            print(response_data)
+            # print("Response received:")
+            # print(f"  Echo: {response_data['echo']}")
+            # print(f"  Analytics: {json.dumps(response_data['analytics'], indent=2)}")
+            # print(f"  Session Stats: {json.dumps(response_data['session_stats'], indent=2)}")
 
             await asyncio.sleep(1)
 
