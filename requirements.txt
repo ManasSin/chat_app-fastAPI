@@ -1,0 +1,5 @@
+fastapi[standard]
+uvicorn[standard]
+sqlalchemy
+websockets
+python-multipart
