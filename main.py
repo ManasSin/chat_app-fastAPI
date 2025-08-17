@@ -139,7 +139,7 @@ async def websocket_endpoint(websocket: WebSocket, session_id: str):
             except Exception as e:
                 db.rollback()
                 print(f"Database error: {e}")
-                current_stats = {"error": str(e), "total_messages": 0, "total_words": 0, "questions_asked": 0, "avg_message_length": 0}
+                session_stats = {"error": str(e), "total_messages": 0, "total_words": 0, "questions_asked": 0, "avg_message_length": 0}
             finally:
                 db.close()
  
