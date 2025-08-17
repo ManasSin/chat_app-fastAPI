@@ -135,6 +135,9 @@ This will:
 - `total_messages`: Total messages in the session
 - `total_words`: Total words across all messages
 - `questions_asked`: Number of questions asked
+- `total_positive_messages`: Number of positive messages
+- `total_negative_messages`: Number of negative messages
+- `total_neutral_messages`: Number of neutral messages
 - `created_at`: Session creation timestamp
 - `last_updated`: Last update timestamp
 
@@ -189,16 +192,3 @@ The backend includes comprehensive error handling for:
 - Database errors
 - Invalid message formats
 - Connection failures
-
-## Performance Considerations
-
-- Uses SQLite for simplicity and development
-- For production, consider using PostgreSQL or MySQL
-- WebSocket connections are managed per session
-- Database connections are properly managed with dependency injection
-
-## Security Notes
-
-- CORS is enabled for all origins (configure appropriately for production)
-- Session IDs should be properly validated in production
-- Consider adding authentication and rate limiting for production use
