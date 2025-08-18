@@ -10,6 +10,12 @@ A FastAPI-based backend that provides real-time chat analytics through WebSocket
 - **Database Storage**: SQLite database for persistent storage of messages and analytics
 - **REST API Endpoints**: Additional endpoints for retrieving session data
 
+## Quick Start Guide
+
+```bash
+./start.server.sh
+```
+
 ## Setup
 
 1. **Install Dependencies**:
