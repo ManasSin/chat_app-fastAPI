@@ -206,4 +206,4 @@ async def get_session_messages(session_id: str, db: Session = Depends(get_db)):
     }
 
 if __name__ == "__main__":
-    uvicorn.run(app, host="localhost", port=8000)
+    uvicorn.run("main:app", reload=True)
