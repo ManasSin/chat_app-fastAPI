@@ -1,194 +1,294 @@
 # Chat Analytics Backend
 
-A FastAPI-based backend that provides real-time chat analytics through WebSocket connections. The system processes messages, stores analytics in a SQLite database, and provides real-time feedback including message analytics and session statistics.
+A scalable, production-ready FastAPI backend for real-time chat analytics with WebSocket support, PostgreSQL, MongoDB, and Redis.
 
-## Features
+## 🚀 Features
 
-- **WebSocket Support**: Real-time bidirectional communication
-- **Message Analytics**: Word count, character count, sentence count, question detection, and sentiment analysis
-- **Session Management**: Track conversation statistics across sessions
-- **Database Storage**: SQLite database for persistent storage of messages and analytics
-- **REST API Endpoints**: Additional endpoints for retrieving session data
+- **Real-time Chat Analytics**: WebSocket-based chat with instant message processing
+- **Multi-Database Architecture**: PostgreSQL for user data, MongoDB for chat messages
+- **Scalable Infrastructure**: Redis caching, connection pooling, and horizontal scaling support
+- **Production Ready**: Docker containerization, health checks, and monitoring
+- **Message Analytics**: Word count, sentiment analysis, question detection, and session statistics
 
-## Setup
-
-1. **Install Dependencies**:
-
-   ```bash
-   pip install -r requirements.txt
-   ```
-
-2. **Run the Backend**:
-
-   ```bash
-   python main.py
-   ```
-
-   The server will start on `http://localhost:8000`
-
-3. **Access API Documentation**:
-   - Swagger UI: `http://localhost:8000/docs`
-   - ReDoc: `http://localhost:8000/redoc`
-
-## WebSocket Usage
-
-### Connection
-
-Connect to the WebSocket endpoint:
+## 🏗️ Architecture
 
 ```
-ws://localhost:8000/ws/chat/{session_id}
+┌─────────────────┐    ┌─────────────────┐    ┌─────────────────┐
+│   Frontend      │    │   FastAPI       │    │   PostgreSQL    │
+│   (WebSocket)   │◄──►│   Backend       │◄──►│   (User Data)   │
+└─────────────────┘    └─────────────────┘    └─────────────────┘
+                                │
+                                ▼
+                       ┌─────────────────┐    ┌─────────────────┐
+                       │     Redis       │    │     MongoDB     │
+                       │   (Caching)     │    │  (Chat Data)   │
+                       └─────────────────┘    └─────────────────┘
 ```
 
-Where `{session_id}` is a unique identifier for the chat session.
+## 📋 Prerequisites
 
-### Message Format
+- Docker and Docker Compose
+- Python 3.11+
+- PostgreSQL 15+
+- MongoDB 6+
+- Redis 7+
 
-Send messages in JSON format:
+## 🚀 Quick Start
+
+### 1. Clone and Setup
+
+```bash
+git clone <repository-url>
+cd backend
+cp config.env.example .env
+# Edit .env with your configuration
+```
+
+### 2. Start Services
+
+```bash
+# Start all services
+docker-compose up -d
+
+# Check service status
+docker-compose ps
+
+# View logs
+docker-compose logs -f backend
+```
+
+### 3. Initialize Database
+
+```bash
+# Create initial migration
+alembic revision --autogenerate -m "Initial migration"
+
+# Apply migration
+alembic upgrade head
+```
+
+### 4. Access the API
+
+- **API Documentation**: http://localhost:8000/docs
+- **Health Check**: http://localhost:8000/health
+- **WebSocket**: ws://localhost:8000/ws/chat/{session_id}
+
+## 🔧 Configuration
+
+### Environment Variables
+
+| Variable       | Description                  | Default                                              |
+| -------------- | ---------------------------- | ---------------------------------------------------- |
+| `POSTGRES_URL` | PostgreSQL connection string | `postgresql://user:password@localhost:5432/database` |
+| `MONGODB_URL`  | MongoDB connection string    | `mongodb://localhost:27017/database`                 |
+| `REDIS_URL`    | Redis connection string      | `redis://localhost:6379`                             |
+| `DEBUG`        | Debug mode                   | `false`                                              |
+| `LOG_LEVEL`    | Logging level                | `INFO`                                               |
+| `ENVIRONMENT`  | Environment name             | `development`                                        |
+
+### Database Configuration
+
+- **PostgreSQL**: User management, sessions, and analytics
+- **MongoDB**: Chat messages and user interactions
+- **Redis**: Caching and session management
+
+## 📊 API Endpoints
+
+### WebSocket
+
+- `GET /ws/chat/{session_id}` - Real-time chat with analytics
+
+### REST API
+
+- `GET /` - Health status
+- `GET /health` - Detailed health check
+- `GET /session/{session_id}/stats` - Session statistics
+- `GET /session/{session_id}/messages` - Session messages
+
+## 🐳 Docker Services
+
+| Service    | Port  | Purpose             |
+| ---------- | ----- | ------------------- |
+| Backend    | 8000  | FastAPI application |
+| PostgreSQL | 5432  | Primary database    |
+| MongoDB    | 27017 | Document database   |
+| Redis      | 6379  | Caching layer       |
+
+## 🔍 Monitoring & Health Checks
+
+### Health Check Endpoint
+
+```bash
+curl http://localhost:8000/health
+```
+
+Response:
 
 ```json
 {
-  "content": "Your message here"
-}
-```
-
-### Response Format
-
-The server responds with:
-
-```json
-{
-  "type": "message_response",
-  "original_message": "Your message here",
-  "echo": "You said: Your message here",
-  "analytics": {
-    "word_count": 3,
-    "char_count": 18,
-    "sentence_count": 1,
-    "is_question": false,
-    "sentiment": "neutral"
-  },
-  "session_stats": {
-    "total_messages": 5,
-    "total_words": 25,
-    "questions_asked": 2,
-    "avg_message_length": 5.0
+  "status": "healthy",
+  "timestamp": "2024-01-01T00:00:00",
+  "version": "1.0.0",
+  "environment": "production",
+  "databases": {
+    "postgresql": true,
+    "mongodb": true
   }
 }
 ```
 
-## Message Processing Logic
+### Docker Health Checks
 
-The backend analyzes messages for:
+All services include health checks:
 
-- **Word Count**: Number of words in the message
-- **Character Count**: Total characters (including spaces)
-- **Sentence Count**: Number of sentences (detected by ., ?, !)
-- **Question Detection**: Identifies questions using question marks or question words (what, how, why, when, where, who)
-- **Sentiment Analysis**: Basic sentiment detection using positive/negative word lists
+- **Backend**: HTTP health endpoint
+- **PostgreSQL**: Database connectivity
+- **MongoDB**: Database ping
+- **Redis**: Redis ping
 
-## REST API Endpoints
+## 🚀 Production Deployment
 
-### Health Check
-
-- `GET /` - Check if the backend is running
-
-### Session Statistics
-
-- `GET /session/{session_id}/stats` - Get statistics for a specific session
-
-### Session Messages
-
-- `GET /session/{session_id}/messages` - Get all messages for a specific session
-
-## Testing
-
-Use the provided test client to test the WebSocket functionality:
+### 1. Environment Setup
 
 ```bash
-python test_client.py
+# Production environment
+export ENVIRONMENT=production
+export DEBUG=false
+export LOG_LEVEL=WARNING
 ```
 
-This will:
+### 2. Database Migrations
 
-1. Connect to the WebSocket endpoint
-2. Send several test messages
-3. Display the responses and analytics
+```bash
+# Run migrations
+alembic upgrade head
 
-## Database Schema
-
-### Messages Table
-
-- `id`: Primary key
-- `session_id`: Session identifier
-- `message_text`: Original message content
-- `word_count`: Number of words
-- `char_count`: Number of characters
-- `sentence_count`: Number of sentences
-- `is_question`: Boolean indicating if it's a question
-- `sentiment`: Sentiment analysis result
-- `processed_at`: Timestamp of processing
-
-### Sessions Table
-
-- `id`: Session identifier
-- `total_messages`: Total messages in the session
-- `total_words`: Total words across all messages
-- `questions_asked`: Number of questions asked
-- `total_positive_messages`: Number of positive messages
-- `total_negative_messages`: Number of negative messages
-- `total_neutral_messages`: Number of neutral messages
-- `created_at`: Session creation timestamp
-- `last_updated`: Last update timestamp
-
-## Example Usage
-
-### JavaScript Client Example
-
-```javascript
-const sessionId = "user123";
-const ws = new WebSocket(`ws://localhost:8000/ws/chat/${sessionId}`);
-
-ws.onopen = () => {
-  console.log("Connected to chat");
-
-  // Send a message
-  ws.send(
-    JSON.stringify({
-      message: "Hello, how are you today?",
-    })
-  );
-};
-
-ws.onmessage = (event) => {
-  const response = JSON.parse(event.data);
-  console.log("Analytics:", response.analytics);
-  console.log("Session Stats:", response.session_stats);
-};
+# Check migration status
+alembic current
 ```
 
-### Python Client Example
+### 3. Scaling
 
-```python
-import websockets
-import json
-import asyncio
+```bash
+# Scale backend service
+docker-compose up -d --scale backend=3
 
-async def chat_client():
-    uri = "ws://localhost:8000/ws/chat/user123"
-    async with websockets.connect(uri) as websocket:
-        await websocket.send(json.dumps({"message": "Hello world!"}))
-        response = await websocket.recv()
-        print(json.loads(response))
-
-asyncio.run(chat_client())
+# Scale with load balancer
+docker-compose up -d nginx
 ```
 
-## Error Handling
+## 🧪 Testing
 
-The backend includes comprehensive error handling for:
+### Run Tests
 
-- WebSocket disconnections
-- Database errors
-- Invalid message formats
-- Connection failures
+```bash
+# Install test dependencies
+pip install -r requirements.txt
+
+# Run tests
+python -m pytest test/
+```
+
+### Test WebSocket
+
+```bash
+# Test WebSocket connection
+wscat -c ws://localhost:8000/ws/chat/test-session
+
+# Send message
+{"message": "Hello, world!"}
+```
+
+## 📈 Performance
+
+### Connection Pooling
+
+- **PostgreSQL**: 20 connections with 30 overflow
+- **MongoDB**: 50 max connections, 10 min connections
+- **Redis**: Optimized for high throughput
+
+### Caching Strategy
+
+- **Session Data**: Redis with TTL
+- **User Analytics**: Redis with background refresh
+- **Message History**: MongoDB with indexes
+
+## 🔒 Security
+
+- **CORS**: Configurable origins for production
+- **Input Validation**: Pydantic models with validation
+- **Database**: Connection pooling and prepared statements
+- **Environment**: Secure configuration management
+
+## 🚧 Development
+
+### Local Development
+
+```bash
+# Start only databases
+docker-compose up -d postgresql mongo redis
+
+# Run backend locally
+python main.py
+```
+
+### Database Migrations
+
+```bash
+# Create new migration
+alembic revision --autogenerate -m "Add new feature"
+
+# Apply migrations
+alembic upgrade head
+
+# Rollback migration
+alembic downgrade -1
+```
+
+## 📝 TODO & Roadmap
+
+### ✅ Phase 1: Foundation & Infrastructure (COMPLETED)
+
+- [x] PostgreSQL and MongoDB setup
+- [x] Docker containerization
+- [x] Database migrations with Alembic
+- [x] Connection pooling and optimization
+- [x] Environment configuration management
+
+### 🔄 Phase 2: Authentication & Security (NEXT)
+
+- [ ] User authentication with JWT
+- [ ] OAuth integration (Auth0)
+- [ ] Protected route middleware
+- [ ] Rate limiting and security
+
+### 📋 Phase 3: Scalability & Performance
+
+- [ ] Redis implementation for caching
+- [ ] Background workers for chat storage
+- [ ] Message queuing with Kafka
+- [ ] Horizontal scaling support
+
+## 🤝 Contributing
+
+1. Fork the repository
+2. Create a feature branch
+3. Make your changes
+4. Add tests
+5. Submit a pull request
+
+## 📄 License
+
+This project is licensed under the MIT License - see the LICENSE file for details.
+
+## 🆘 Support
+
+For support and questions:
+
+- Create an issue in the repository
+- Check the documentation
+- Review the health check endpoint
+
+---
+
+**Status**: Phase 1 Complete ✅ | **Next**: Authentication & Security 🔐

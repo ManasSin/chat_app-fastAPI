@@ -2,3 +2,11 @@ fastapi[standard]
 uvicorn[standard]
 sqlalchemy
 websockets
+redis
+psycopg2-binary
+pymongo
+alembic
+python-dotenv
+gunicorn
+python-multipart
+pymongo
