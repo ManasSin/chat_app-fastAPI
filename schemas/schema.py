@@ -1,4 +1,5 @@
-from pydantic import BaseModel
+from typing import Optional
+from pydantic import BaseModel, Field
 from datetime import datetime
 
 
@@ -14,16 +15,31 @@ class Message(BaseModel):
     timestamp: datetime
 
 
+class Analytics(BaseModel):
+    word_count: int
+    char_count: int
+    sentence_count: int
+    is_question: bool
+    sentiment: str
+
+
+class MessageInput(BaseModel):
+    message: str = Field(..., min_length=1, max_length=5000)
+    timestamp: Optional[datetime] = None
+    client_id: str = Field(...)
+    message_type: Optional[str] = Field(default="text", regex="^(text|command|system)$")
+
+
 class Session(BaseModel):
-    id: str
+    session_id: str
     total_messages: int
     total_words: int
     questions_asked: int
+    avg_message_length: float
     total_positive_messages: int
     total_negative_messages: int
     total_neutral_messages: int
-    created_at: datetime
-    last_updated: datetime
+    last_activity: datetime
 
 
 class User(BaseModel):
@@ -33,6 +49,16 @@ class User(BaseModel):
     password: str
     created_at: datetime
     last_updated: datetime
+
+
+class MessageResponse(BaseModel):
+    type: str = "message_response"
+    message_id: str
+    original_message: str
+    echo: str
+    analytics: Analytics
+    timestamp: datetime
+    session_stats: Session
 
 
 class UserSession(BaseModel):

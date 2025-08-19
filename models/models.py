@@ -63,3 +63,14 @@ class UserMessageModel(Base):
     message_id = Column(String, index=True)
     created_at = Column(DateTime, default=datetime.now(timezone.utc))
     last_updated = Column(DateTime, default=datetime.now(timezone.utc))
+
+
+class SessionMemberModel(Base):
+    __tablename__ = "session_members"
+
+    id = Column(String, primary_key=True, index=True)
+    session_id = Column(String, index=True)
+    user_id = Column(String, index=True)
+    connected = Column(Boolean, default=True)
+    joined_at = Column(DateTime, default=datetime.now(timezone.utc))
+    last_seen = Column(DateTime, default=datetime.now(timezone.utc))

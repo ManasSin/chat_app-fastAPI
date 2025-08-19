@@ -10,3 +10,6 @@ python-dotenv
 gunicorn
 python-multipart
 pymongo
+passlib[bcrypt]
+PyJWT
+email-validator

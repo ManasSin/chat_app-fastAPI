@@ -1,6 +1,7 @@
 import uuid
 from datetime import datetime, timezone
 from typing import Optional, Dict, Any, List
+from schemas.schema import Session
 from services.redis_service import redis_service
 import logging
 
@@ -124,7 +125,7 @@ class SessionService:
             if not session_data:
                 return None
 
-            analytics = {
+            analytics: Session = {
                 "session_id": session_id,
                 "total_messages": session_data.get("total_messages", 0),
                 "total_words": session_data.get("total_words", 0),

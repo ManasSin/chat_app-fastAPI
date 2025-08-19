@@ -1,294 +1,151 @@
-# Chat Analytics Backend
+Lightweight, production-minded FastAPI backend for real-time chat analytics (WebSocket) using PostgreSQL, MongoDB and Redis.
 
-A scalable, production-ready FastAPI backend for real-time chat analytics with WebSocket support, PostgreSQL, MongoDB, and Redis.
+Summary
 
-## 🚀 Features
+- Real-time WebSocket chat with message analytics
+- PostgreSQL for users/relations, MongoDB for message storage, Redis for caching & pub/sub
+- Background workers for persistence and pub/sub-based broadcasting
 
-- **Real-time Chat Analytics**: WebSocket-based chat with instant message processing
-- **Multi-Database Architecture**: PostgreSQL for user data, MongoDB for chat messages
-- **Scalable Infrastructure**: Redis caching, connection pooling, and horizontal scaling support
-- **Production Ready**: Docker containerization, health checks, and monitoring
-- **Message Analytics**: Word count, sentiment analysis, question detection, and session statistics
+Prerequisites
 
-## 🏗️ Architecture
-
-```
-┌─────────────────┐    ┌─────────────────┐    ┌─────────────────┐
-│   Frontend      │    │   FastAPI       │    │   PostgreSQL    │
-│   (WebSocket)   │◄──►│   Backend       │◄──►│   (User Data)   │
-└─────────────────┘    └─────────────────┘    └─────────────────┘
-                                │
-                                ▼
-                       ┌─────────────────┐    ┌─────────────────┐
-                       │     Redis       │    │     MongoDB     │
-                       │   (Caching)     │    │  (Chat Data)   │
-                       └─────────────────┘    └─────────────────┘
-```
-
-## 📋 Prerequisites
-
-- Docker and Docker Compose
 - Python 3.11+
-- PostgreSQL 15+
-- MongoDB 6+
-- Redis 7+
+- PostgreSQL
+- MongoDB (Cassandra would be a good alternative, but due to resource constraints, MongoDB is preferred)
+- Redis
+- Docker (optional)
 
-## 🚀 Quick Start
+Quick start (local)
 
-### 1. Clone and Setup
+1. Copy environment file and edit:
 
 ```bash
-git clone <repository-url>
-cd backend
 cp config.env.example .env
-# Edit .env with your configuration
+# open .env and set POSTGRES_URL, MONGODB_URL, REDIS_URL, SECRET_KEY
 ```
 
-### 2. Start Services
+2. Start supporting services (Docker recommended):
 
 ```bash
-# Start all services
+# with docker-compose
 docker-compose up -d
 
-# Check service status
-docker-compose ps
-
-# View logs
-docker-compose logs -f backend
-```
-
-### 3. Initialize Database
-
-```bash
-# Create initial migration
-alembic revision --autogenerate -m "Initial migration"
-
-# Apply migration
-alembic upgrade head
-```
-
-### 4. Access the API
-
-- **API Documentation**: http://localhost:8000/docs
-- **Health Check**: http://localhost:8000/health
-- **WebSocket**: ws://localhost:8000/ws/chat/{session_id}
-
-## 🔧 Configuration
-
-### Environment Variables
-
-| Variable       | Description                  | Default                                              |
-| -------------- | ---------------------------- | ---------------------------------------------------- |
-| `POSTGRES_URL` | PostgreSQL connection string | `postgresql://user:password@localhost:5432/database` |
-| `MONGODB_URL`  | MongoDB connection string    | `mongodb://localhost:27017/database`                 |
-| `REDIS_URL`    | Redis connection string      | `redis://localhost:6379`                             |
-| `DEBUG`        | Debug mode                   | `false`                                              |
-| `LOG_LEVEL`    | Logging level                | `INFO`                                               |
-| `ENVIRONMENT`  | Environment name             | `development`                                        |
-
-### Database Configuration
-
-- **PostgreSQL**: User management, sessions, and analytics
-- **MongoDB**: Chat messages and user interactions
-- **Redis**: Caching and session management
-
-## 📊 API Endpoints
-
-### WebSocket
-
-- `GET /ws/chat/{session_id}` - Real-time chat with analytics
-
-### REST API
-
-- `GET /` - Health status
-- `GET /health` - Detailed health check
-- `GET /session/{session_id}/stats` - Session statistics
-- `GET /session/{session_id}/messages` - Session messages
-
-## 🐳 Docker Services
-
-| Service    | Port  | Purpose             |
-| ---------- | ----- | ------------------- |
-| Backend    | 8000  | FastAPI application |
-| PostgreSQL | 5432  | Primary database    |
-| MongoDB    | 27017 | Document database   |
-| Redis      | 6379  | Caching layer       |
-
-## 🔍 Monitoring & Health Checks
-
-### Health Check Endpoint
-
-```bash
-curl http://localhost:8000/health
-```
-
-Response:
-
-```json
-{
-  "status": "healthy",
-  "timestamp": "2024-01-01T00:00:00",
-  "version": "1.0.0",
-  "environment": "production",
-  "databases": {
-    "postgresql": true,
-    "mongodb": true
-  }
-}
-```
-
-### Docker Health Checks
-
-All services include health checks:
-
-- **Backend**: HTTP health endpoint
-- **PostgreSQL**: Database connectivity
-- **MongoDB**: Database ping
-- **Redis**: Redis ping
-
-## 🚀 Production Deployment
-
-### 1. Environment Setup
-
-```bash
-# Production environment
-export ENVIRONMENT=production
-export DEBUG=false
-export LOG_LEVEL=WARNING
-```
-
-### 2. Database Migrations
-
-```bash
-# Run migrations
-alembic upgrade head
-
-# Check migration status
-alembic current
-```
-
-### 3. Scaling
-
-```bash
-# Scale backend service
-docker-compose up -d --scale backend=3
-
-# Scale with load balancer
-docker-compose up -d nginx
-```
-
-## 🧪 Testing
-
-### Run Tests
-
-```bash
-# Install test dependencies
-pip install -r requirements.txt
-
-# Run tests
-python -m pytest test/
-```
-
-### Test WebSocket
-
-```bash
-# Test WebSocket connection
-wscat -c ws://localhost:8000/ws/chat/test-session
-
-# Send message
-{"message": "Hello, world!"}
-```
-
-## 📈 Performance
-
-### Connection Pooling
-
-- **PostgreSQL**: 20 connections with 30 overflow
-- **MongoDB**: 50 max connections, 10 min connections
-- **Redis**: Optimized for high throughput
-
-### Caching Strategy
-
-- **Session Data**: Redis with TTL
-- **User Analytics**: Redis with background refresh
-- **Message History**: MongoDB with indexes
-
-## 🔒 Security
-
-- **CORS**: Configurable origins for production
-- **Input Validation**: Pydantic models with validation
-- **Database**: Connection pooling and prepared statements
-- **Environment**: Secure configuration management
-
-## 🚧 Development
-
-### Local Development
-
-```bash
-# Start only databases
+# or start databases individually
 docker-compose up -d postgresql mongo redis
-
-# Run backend locally
-python main.py
 ```
 
-### Database Migrations
+3. Install Python deps and run backend locally:
 
 ```bash
-# Create new migration
-alembic revision --autogenerate -m "Add new feature"
+python -m venv .venv
+source .venv/bin/activate
+pip install -r requirements.txt
+uvicorn main:app --reload --port 8000
+```
 
-# Apply migrations
+Open API docs: http://localhost:8000/docs
+
+WebSocket endpoint: ws://localhost:8000/ws/chat/{session_id}
+
+Run notes
+
+- Incoming WebSocket messages are validated with Pydantic.
+- Messages are published to Redis channels for session broadcasting and to a `persist:messages` channel for Mongo persistence (background worker handles DB writes).
+
+<!-- Run & manage the PostgreSQL schema with Alembic (beginner-friendly)
+
+What Alembic does
+
+- Alembic tracks schema changes and applies them to your PostgreSQL database as migrations. You write or autogenerate a migration when your SQLAlchemy models change.
+
+Basic setup (if not already present)
+
+1. Ensure `alembic` is installed (it's in `requirements.txt`).
+2. Check there is an `alembic` directory and `alembic.ini` in the project root. The project should have an `env.py` that imports your SQLAlchemy `Base.metadata` (commonly from `models/models.py`). If not, let me know and I can add it.
+
+Common workflow (safe, step-by-step)
+
+1. Set the DB URL environment variable used by SQLAlchemy / Alembic. Example (macOS / zsh):
+
+```bash
+export POSTGRES_URL="postgresql://user:password@localhost:5432/chatdb"
+```
+
+2. Create a migration (autogenerate inspects your models and creates a migration file):
+
+```bash
+# create a new revision with autogenerated changes
+alembic revision --autogenerate -m "describe change"
+```
+
+3. Inspect the generated migration file in `alembic/versions/` and adjust if needed.
+
+4. Apply migrations to the database:
+
+```bash
 alembic upgrade head
+```
 
-# Rollback migration
+5. Check current revision / history:
+
+```bash
+alembic current
+alembic history --verbose
+```
+
+6. Roll back a migration (use with care):
+
+```bash
+# step back one revision
 alembic downgrade -1
 ```
 
-## 📝 TODO & Roadmap
+Troubleshooting tips
 
-### ✅ Phase 1: Foundation & Infrastructure (COMPLETED)
+- If Alembic can't find metadata, open `alembic/env.py` and point it to your SQLAlchemy `Base` (for this repo it's typically in `models/models.py`). Example inside `env.py`:
 
-- [x] PostgreSQL and MongoDB setup
-- [x] Docker containerization
-- [x] Database migrations with Alembic
-- [x] Connection pooling and optimization
-- [x] Environment configuration management
+```py
+from models import models
+target_metadata = models.Base.metadata
+```
 
-### 🔄 Phase 2: Authentication & Security (NEXT)
+- If autogenerate shows no changes when you expect them, ensure the same model classes are imported by the running Python path (activate your virtualenv and run the command from project root).
 
-- [ ] User authentication with JWT
-- [ ] OAuth integration (Auth0)
-- [ ] Protected route middleware
-- [ ] Rate limiting and security
+- To stamp the DB without running migrations (useful for syncing state):
 
-### 📋 Phase 3: Scalability & Performance
+```bash
+alembic stamp head
+```
 
-- [ ] Redis implementation for caching
-- [ ] Background workers for chat storage
-- [ ] Message queuing with Kafka
-- [ ] Horizontal scaling support
+Notes
 
-## 🤝 Contributing
+- Alembic manages only PostgreSQL/SQLAlchemy schema changes. MongoDB schema/index management is separate (there's an `init-scripts/02-create-indexes-mongo.js` to create indexes for messages).
+- Keep migrations small and review autogenerated code before applying in production.
 
-1. Fork the repository
-2. Create a feature branch
-3. Make your changes
-4. Add tests
-5. Submit a pull request
+Useful commands (summary)
 
-## 📄 License
+```bash
+# create migration
+alembic revision --autogenerate -m "Add field X"
+# apply
+alembic upgrade head
+# revert one step
+alembic downgrade -1
+# show current
+alembic current
+# show history
+alembic history --verbose
+``` -->
 
-This project is licensed under the MIT License - see the LICENSE file for details.
+Where to look in this repo
 
-## 🆘 Support
+- SQLAlchemy models: `models/models.py`
+- WebSocket router: `routers/chat.py`
+- Background Mongo persistence: `services/mongo_persist_service.py`
 
-For support and questions:
+If you'd like, I can:
 
-- Create an issue in the repository
-- Check the documentation
-- Review the health check endpoint
+- wire `alembic/env.py` to import `models.models.Base` if it's missing
+- add a small example migration
+- or run a local smoke test of migration commands and report the output
 
----
-
-**Status**: Phase 1 Complete ✅ | **Next**: Authentication & Security 🔐
+That's it — short and focused. Tell me if you want the Alembic `env.py` prepared or a sample migration committed.
