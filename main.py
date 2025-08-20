@@ -1,4 +1,7 @@
-from fastapi import FastAPI, Depends, HTTPException
+from fastapi import FastAPI, Depends, HTTPException, Request, status
+from fastapi.responses import JSONResponse
+from fastapi.exceptions import RequestValidationError
+from starlette.exceptions import HTTPException as StarletteHTTPException
 from fastapi.middleware.cors import CORSMiddleware
 import uvicorn
 import logging
@@ -21,6 +24,45 @@ logger = logging.getLogger(__name__)
 init_db()
 
 app = FastAPI(title="Chat Analytics Backend", version="1.0.0")
+
+
+# Global exception handlers to return consistent API responses
+@app.exception_handler(StarletteHTTPException)
+async def http_exception_handler(request: Request, exc: StarletteHTTPException):
+    # preserve status code and message
+    content = {
+        "success": False,
+        "message": exc.detail if exc.detail else "HTTP error",
+        "error": None,
+    }
+    return JSONResponse(status_code=exc.status_code, content=content)
+
+
+@app.exception_handler(RequestValidationError)
+async def validation_exception_handler(request: Request, exc: RequestValidationError):
+    return JSONResponse(
+        status_code=422,
+        content={
+            "success": False,
+            "message": "Validation error",
+            "error": exc.errors(),
+        },
+    )
+
+
+@app.exception_handler(Exception)
+async def generic_exception_handler(request: Request, exc: Exception):
+    # Log the traceback server-side and return a generic message to clients
+    logger.exception("Unhandled exception: %s", exc)
+    return JSONResponse(
+        status_code=500,
+        content={
+            "success": False,
+            "message": "Internal server error",
+            "error": str(exc),
+        },
+    )
+
 
 # Configure CORS for production
 app.add_middleware(

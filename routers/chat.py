@@ -13,6 +13,7 @@ from schemas.auth import UserCreate, UserLogin, Token, UserOut
 from utils import websocket_utils as manager
 from models.models import MessageModel
 from middleware.auth_middleware import AuthMiddleware
+from utils.api_response import success, error
 
 logger = logging.getLogger(__name__)
 
@@ -76,13 +77,15 @@ async def websocket_endpoint(websocket: WebSocket, session_id: str):
 
 @router.get("/")
 async def root():
-    return {"message": "Chat Analytics Backend is running"}
+    return success({"message": "Chat Analytics Backend is running"}, message="OK")
 
 
 @router.get("/session/{session_id}/stats", dependencies=[Depends(AuthMiddleware)])
 async def get_session_stats_endpoint(session_id: str, db: Session = Depends(get_db)):
     stats = session_service.get_session_analytics(session_id)
-    return {"session_id": session_id, "stats": stats}
+    return success(
+        {"session_id": session_id, "stats": stats}, message="Session stats retrieved"
+    )
 
 
 @router.get("/session/{session_id}/messages", dependencies=[Depends(AuthMiddleware)])
@@ -110,18 +113,19 @@ async def get_session_messages(session_id: str, db: Session = Depends(get_db)):
             }
             message_list.append(message_data)
 
-        return {
-            "session_id": session_id,
-            "messages": message_list,
-            "source": "database",
-            "cached_count": len(message_list),
-        }
+        return success(
+            {
+                "session_id": session_id,
+                "messages": message_list,
+                "source": "database",
+                "cached_count": len(message_list),
+            },
+            message="Messages retrieved",
+        )
 
     except Exception as e:
         logger.error(f"Error getting session messages for {session_id}: {e}")
-        raise HTTPException(
-            status_code=500, detail=f"Error retrieving messages: {str(e)}"
-        )
+        return error("Error retrieving messages", status_code=500, details=str(e))
 
 
 @router.post(
@@ -132,20 +136,21 @@ async def get_session_messages(session_id: str, db: Session = Depends(get_db)):
 async def register(user_in: UserCreate):
     user = auth_service.register_user(user_in.name, user_in.email, user_in.password)
     if not user:
-        raise HTTPException(
-            status_code=status.HTTP_400_BAD_REQUEST,
-            detail="User already exists or could not be created",
-        )
-    return UserOut.from_orm(user)
+        return error("User already exists or could not be created", status_code=400)
+    return success(
+        UserOut.from_orm(user).dict(),
+        message="User created",
+        status_code=status.HTTP_201_CREATED,
+    )
 
 
 @router.post("/auth/login", response_model=Token)
 async def login(user_in: UserLogin):
     user = auth_service.authenticate_user(user_in.email, user_in.password)
     if not user:
-        raise HTTPException(
-            status_code=status.HTTP_401_UNAUTHORIZED,
-            detail="Incorrect email or password",
-        )
+        return error("Incorrect email or password", status_code=401)
     token, expires_in = auth_service.create_token_for_user(user)
-    return {"access_token": token, "token_type": "bearer", "expires_in": expires_in}
+    return success(
+        {"access_token": token, "token_type": "bearer", "expires_in": expires_in},
+        message="Login successful",
+    )
